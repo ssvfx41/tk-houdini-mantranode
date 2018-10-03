@@ -7,6 +7,7 @@
 # By accessing, using, copying or modifying this work you indicate your
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
+# dev version
 
 # built-ins
 import os
@@ -73,7 +74,9 @@ class TkMantraNodeHandler(object):
         "vm_image_jpeg_quality",
         "vm_image_tiff_compression",
     ]
-    """The default parameters to reset when the profile changes."""
+    """The default parameters to reset when the   
+    
+     changes."""
 
     TK_DEFAULT_UPDATE_PARM_MAPPING = {     
         "sgtk_soho_diskfile": "soho_diskfile",
@@ -630,14 +633,43 @@ class TkMantraNodeHandler(object):
         output_template = self._app.get_template_by_name(
             output_profile[template_name])
 
+        # get the Step name field for the templated Mantra Output
+        entity_name = ""
+         
+        try:
+            ctx = self._app.context
+            entity_name = ctx.entity['name']
+            entity_type = ctx.entity['type']
+        except:
+            msg="Could not set the Shotgun entity context. Try Saving the Hip file."
+            self._app.log_debug(msg)
+            raise sgtk.TankError(msg)
+
         # create fields dict with all the metadata
-        fields = {
-            "name": work_file_fields.get("name", None),
-            "node": node.name(),
-            "renderpass": node.name(),
-            "SEQ": "FORMAT: $F",
-            "version": work_file_fields.get("version", None),
-        } 
+        fields = {}
+
+        if entity_type == "Asset":            
+            fields = {
+                "name": work_file_fields.get("name", None),
+                "node": node.name(),
+                "renderpass": node.name(),
+                "HSEQ": "FORMAT: $F",
+                "version": work_file_fields.get("version", None),
+                "sg_asset_type": work_file_fields.get("sg_asset_type", None),
+                "Step" : work_file_fields.get("Step", None),
+                "Asset" : entity_name
+            }
+
+        if entity_type == "Shot":
+            fields = {
+                "name": work_file_fields.get("name", None),
+                "node": node.name(),
+                "renderpass": node.name(),
+                "HSEQ": "FORMAT: $F",
+                "version": work_file_fields.get("version", None),
+                "Step" : work_file_fields.get("Step", None),
+                "Shot" : entity_name
+            } 
 
         # use %V - full view printout as default for the eye field
         fields["eye"] = "%V"
